@@ -1,5 +1,8 @@
 # mouse-auto-mover
+
 Automatically move mouse to avoid screen saver
+
+Currently the tools will move the mouse location by 5px offset per 60 seconds.
 
 # install
 
