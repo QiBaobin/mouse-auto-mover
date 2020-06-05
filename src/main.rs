@@ -22,6 +22,11 @@ struct Opt {
 
 pub fn main() -> Result<()> {
     let opt = Opt::from_args();
+    macro_rules! log {
+        ($($expression:expr),+) => {
+            opt.log_fmt(format_args!($($expression),+))
+        };
+    }
 
     let mut enigo = Enigo::new();
     let size = Enigo::main_display_size();
@@ -29,14 +34,15 @@ pub fn main() -> Result<()> {
     let edge = 0..(opt.distance as i32) + 1;
     let offset = -(opt.distance as i32);
     loop {
-        opt.log_fmt(format_args!("Sleep for {}", opt.interval))?;
+        log!("Sleep for {}", opt.interval)?;
         thread::sleep(Duration::from_secs(opt.interval));
 
         let position = Enigo::mouse_location();
-        opt.log_fmt(format_args!(
+        log!(
             "Wake up at mouse cursor position at {} {}",
-            position.0, position.1
-        ))?;
+            position.0,
+            position.1
+        )?;
 
         if edge.contains(&position.0) || edge.contains(&position.1) {
             enigo.mouse_move_to(size.0 as i32, size.1 as i32);
@@ -45,10 +51,7 @@ pub fn main() -> Result<()> {
         }
 
         let position = Enigo::mouse_location();
-        opt.log_fmt(format_args!(
-            "Tried to move and now at {} {}",
-            position.0, position.1
-        ))?;
+        log!("Tried to move and now at {} {}", position.0, position.1)?;
     }
 }
 
