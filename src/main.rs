@@ -24,7 +24,10 @@ pub fn main() -> Result<()> {
     let opt = Opt::from_args();
     macro_rules! log {
         ($($expression:expr),+) => {
-            opt.log_fmt(format_args!($($expression),+))
+            if opt.verbose {
+                write!(io::stdout(), $($expression),+)?;
+                io::stdout().write_all(b"\n")?;
+            }
         };
     }
 
@@ -34,7 +37,7 @@ pub fn main() -> Result<()> {
     let edge = 0..(opt.distance as i32) + 1;
     let offset = -(opt.distance as i32);
     loop {
-        log!("Sleep for {}", opt.interval)?;
+        log!("Sleep for {} seconds...", opt.interval);
         thread::sleep(Duration::from_secs(opt.interval));
 
         let position = Enigo::mouse_location();
@@ -42,7 +45,7 @@ pub fn main() -> Result<()> {
             "Wake up at mouse cursor position at {} {}",
             position.0,
             position.1
-        )?;
+        );
 
         if edge.contains(&position.0) || edge.contains(&position.1) {
             enigo.mouse_move_to(size.0 as i32, size.1 as i32);
@@ -50,17 +53,17 @@ pub fn main() -> Result<()> {
             enigo.mouse_move_relative(offset, offset);
         }
 
-        let position = Enigo::mouse_location();
-        log!("Tried to move and now at {} {}", position.0, position.1)?;
-    }
-}
-
-impl Opt {
-    fn log_fmt(&self, fmt: std::fmt::Arguments) -> Result<()> {
-        if self.verbose {
-            io::stdout().write_fmt(fmt)?;
-            io::stdout().write_all(b"\n")?;
+        let new_position = Enigo::mouse_location();
+        log!(
+            "Tried to move and now at {} {}",
+            new_position.0,
+            new_position.1
+        );
+        if new_position == position {
+            return Err(std::io::Error::new(
+                std::io::ErrorKind::Other,
+                "Can't move mouse, quit now!",
+            ));
         }
-        Ok(())
     }
 }
