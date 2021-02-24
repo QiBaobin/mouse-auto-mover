@@ -8,12 +8,16 @@ use structopt::StructOpt;
 #[structopt(name = "mouse mover", about = "Mouse mover usage.")]
 struct Opt {
     /// set the distance delta when we want to move
-    #[structopt(short, long, default_value = "5")]
+    #[structopt(short, long, default_value = "50")]
     distance: usize,
 
     /// set the time interval in seconds, how often we run
     #[structopt(short, long, default_value = "60")]
     interval: u64,
+
+    /// set the count of moving in one time
+    #[structopt(short, long, default_value = "10")]
+    count: u64,
 
     #[structopt(short, long)]
     verbose: bool,
@@ -31,30 +35,37 @@ pub fn main() -> Result<()> {
     }
 
     let mouse = mouse_rs::Mouse::new();
-    let mut offset = opt.distance as i32;
+    let mut offset_x = opt.distance as i32;
+    let mut offset_y = offset_x;
     loop {
         log!("Sleep for {} seconds...", opt.interval);
         thread::sleep(Duration::from_secs(opt.interval));
 
-        let position = mouse.get_position().unwrap();
+        let mut position = mouse.get_position().unwrap();
         log!(
             "Wake up at mouse cursor position at {} {}",
             position.x,
             position.y
         );
 
-        mouse
-            .move_to(position.x as i32 + offset, position.y as i32 + offset)
-            .expect("Unable to move mouse");
+        for _ in 0..opt.count {
+            mouse
+                .move_to(position.x as i32 + offset_x, position.y as i32 + offset_y)
+                .expect("Unable to move mouse");
 
-        let new_position = mouse.get_position().unwrap();
-        log!(
-            "Tried to move and now at {} {}",
-            new_position.x,
-            new_position.y
-        );
-        if new_position.x == position.x && new_position.y == position.y {
-            offset = -offset;
+            let new_position = mouse.get_position().unwrap();
+            log!(
+                "Tried to move and now at {} {}",
+                new_position.x,
+                new_position.y
+            );
+            if new_position.x == position.x {
+                offset_x = -offset_x;
+            }
+            if new_position.y == position.y {
+                offset_y = -offset_y;
+            }
+            position = new_position;
         }
     }
 }
